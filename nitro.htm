@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Visitor Information</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1b1b1b;
+            color: #00ff00;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            min-height: 100vh;
+            margin: 0;
+            overflow-y: auto;
+            align-items: start;
+        }
+        .info {
+            font-size: 1.2em;
+            background: #333;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+        }
+        .info h2 {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #aaffaa;
+        }
+        .info p {
+            margin: 5px 0;
+            font-size: 0.9em;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <!-- Each div represents a data block with visitor information -->
+    <div id="ip" class="info"><h2>IP Address</h2><p>Loading...</p></div>
+    <div id="location" class="info"><h2>Location</h2><p>Loading...</p></div>
+    <div id="timezone" class="info"><h2>Timezone & Date/Time</h2><p>Loading...</p></div>
+    <div id="browser" class="info"><h2>Browser</h2><p>Loading...</p></div>
+    <div id="os" class="info"><h2>Operating System</h2><p>Loading...</p></div>
+    <div id="gpu" class="info"><h2>Graphics Card (GPU)</h2><p>Loading...</p></div>
+    <div id="connection" class="info"><h2>Network Connection</h2><p>Loading...</p></div>
+    <div id="language" class="info"><h2>Languages</h2><p>Loading...</p></div>
+    <div id="battery" class="info"><h2>Battery Status</h2><p>Loading...</p></div>
+    <div id="plugins" class="info"><h2>Installed Plugins</h2><p>Loading...</p></div>
+    <div id="history" class="info"><h2>History Length</h2><p>Loading...</p></div>
+    <div id="media" class="info"><h2>Media Devices</h2><p>Loading...</p></div>
+    <div id="cpu" class="info"><h2>CPU Cores</h2><p>Loading...</p></div>
+    <div id="clipboard" class="info"><h2>Clipboard Access</h2><p>Loading...</p></div>
+    <div id="font-preferences" class="info"><h2>Font & Color Scheme</h2><p>Loading...</p></div>
+    <div id="motion" class="info"><h2>Reduced Motion Preference</h2><p>Loading...</p></div>
+    <div id="orientation" class="info"><h2>Screen Orientation</h2><p>Loading...</p></div>
+    <div id="lastActive" class="info"><h2>Last Mouse Activity</h2><p>Loading...</p></div>
+
+    <script>
+        // Function to update mouse activity
+        function updateLastActive() {
+            document.getElementById('lastActive').querySelector('p').textContent = new Date().toLocaleString();
+        }
+        document.addEventListener('mousemove', updateLastActive);
+        document.addEventListener('keydown', updateLastActive);
+
+        // Fetch IP address
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => document.getElementById('ip').querySelector('p').textContent = data.ip)
+            .catch(() => document.getElementById('ip').querySelector('p').textContent = "Unavailable");
+
+        // Fetch location based on IP
+        fetch('https://ipinfo.io/json?token=b39a35b920163f')
+            .then(response => response.json())
+            .then(data => document.getElementById('location').querySelector('p').textContent = `${data.city}, ${data.region}, ${data.country}`)
+            .catch(() => document.getElementById('location').querySelector('p').textContent = "Unavailable");
+
+        // Timezone and current date/time
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const currentDate = new Date().toLocaleString();
+        document.getElementById('timezone').querySelector('p').textContent = `${timezone}, ${currentDate}`;
+
+        // Browser and OS
+        document.getElementById('browser').querySelector('p').textContent = navigator.userAgent;
+        document.getElementById('os').querySelector('p').textContent = navigator.platform;
+
+        // Language preferences
+        document.getElementById('language').querySelector('p').textContent = navigator.languages.join(', ');
+
+        // Graphics Card (GPU) detection (experimental WebGL approach)
+        function getGpuInfo() {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl');
+            if (gl) {
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                return debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "Unavailable";
+            }
+            return "Not Supported";
+        }
+        document.getElementById('gpu').querySelector('p').textContent = getGpuInfo();
+
+        // Network connection type, speed, etc.
+        if (navigator.connection) {
+            const { effectiveType, downlink, rtt } = navigator.connection;
+            document.getElementById('connection').querySelector('p').textContent = `Type: ${effectiveType}, Downlink: ${downlink} Mbps, RTT: ${rtt} ms`;
+        } else {
+            document.getElementById('connection').querySelector('p').textContent = "Not Available";
+        }
+
+        // Battery info
+        if (navigator.getBattery) {
+            navigator.getBattery().then(battery => {
+                document.getElementById('battery').querySelector('p').textContent = `Level: ${battery.level * 100}%, Charging: ${battery.charging ? "Yes" : "No"}`;
+            }).catch(() => {
+                document.getElementById('battery').querySelector('p').textContent = "Not Available";
+            });
+        } else {
+            document.getElementById('battery').querySelector('p').textContent = "Not Supported";
+        }
+
+        // Plugins
+        const plugins = Array.from(navigator.plugins).map(plugin => plugin.name).join(", ") || "No plugins found";
+        document.getElementById('plugins').querySelector('p').textContent = plugins;
+
+        // History length
+        document.getElementById('history').querySelector('p').textContent = `Number of pages visited in session: ${history.length}`;
+
+        // Media devices
+        navigator.mediaDevices.enumerateDevices()
+            .then(devices => {
+                const types = devices.map(device => device.kind).filter((v, i, a) => a.indexOf(v) === i);
+                document.getElementById('media').querySelector('p').textContent = `Available: ${types.join(", ")}`;
+            })
+            .catch(() => {
+                document.getElementById('media').querySelector('p').textContent = "Unable to access media devices";
+            });
+
+        // CPU cores
+        document.getElementById('cpu').querySelector('p').textContent = navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} logical cores` : "Not Available";
+
+        // Clipboard permissions
+        if (navigator.permissions) {
+            navigator.permissions.query({ name: "clipboard-read" }).then(result => {
+                document.getElementById('clipboard').querySelector('p').textContent = result.state === "granted" ? "Access Granted" : "Access Denied";
+            }).catch(() => {
+                document.getElementById('clipboard').querySelector('p').textContent = "Permission Unknown";
+            });
+        } else {
+            document.getElementById('clipboard').querySelector('p').textContent = "Not Supported";
+        }
+
+        // Font preferences and color scheme
+        const colorScheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "Dark" : "Light";
+        const fontSize = window.getComputedStyle(document.body).getPropertyValue('font-size');
+        document.getElementById('font-preferences').querySelector('p').textContent = `Font Size: ${fontSize}, Color Scheme: ${colorScheme}`;
+
+        // Reduced motion preference
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        document.getElementById('motion').querySelector('p').textContent = reducedMotion ? "User prefers reduced motion" : "No preference";
+
+        // Screen orientation
+        const orientation = screen.orientation || {};
+        document.getElementById('orientation').querySelector('p').textContent = orientation.type || "Unavailable";
+    </script>
+</body>
+</html>
